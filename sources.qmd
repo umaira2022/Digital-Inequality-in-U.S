@@ -1,0 +1,27 @@
+---
+title: "Sources"
+format: html
+execute:
+  echo: false
+---
+
+## Data Sources
+
+This project uses publicly available data from the **American Community Survey (ACS)** 5-year estimates (2019–2023), provided by the **U.S. Census Bureau**.
+
+We accessed this data using the [`tidycensus`](https://walker-data.com/tidycensus/) R package. Key variables include:
+
+- `DP02_0152P`: Percent of households with a broadband internet subscription  
+- `B19013_001`: Median household income  
+- `DP05_0077P`: Percent of population identifying as White  
+- `DP02_0067P`: Percent of adults with a bachelor’s degree  
+- `DP02_0057P`: Percent of individuals currently enrolled in school  
+
+Data was retrieved programmatically using the Census API.
+
+## 📦 R Packages Used
+
+- [`tidycensus`](https://walker-data.com/tidycensus/) – Access ACS & decennial census data
+- `tidyverse` – Data wrangling and visualization
+- `ggplot2` – Plotting and visual exploration
+- `dplyr`, `readr`, `stringr`, `forcats` – Data manipulation
