@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 _site
 *_files
 *_cache
 
 /.quarto/
+=======
+/.quarto/
+*_files
+*_cache
+>>>>>>> 871be6ac9907a76ea7d8185229c736ae810a58a9
