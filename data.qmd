@@ -1,0 +1,49 @@
+---
+title: "Digital Inequality in U.S. Broadband Access"
+format: html
+execute: 
+  echo: false
+---
+
+
+```{r}
+#| echo: false
+#| warning: false
+# Load required packages
+library(tidyverse)
+library(tidycensus)
+# Load necessary packages
+library(tidyverse)
+
+# Step 1: Read the RDS file
+acs_extended <- readRDS("acs_extended_2019_2023.rds")
+
+# Step 2: Pivot wider so each county is one row with 5 variables as columns
+acs_wide <- acs_extended %>%
+  select(GEOID, NAME, variable, estimate) %>%
+  pivot_wider(
+    names_from = variable,
+    values_from = estimate
+  )
+
+# Step 3: Clean column names and create derived variable
+acs_clean <- acs_wide %>%
+  rename(
+    county         = NAME,
+    broadband_total  = broadband_total,
+    median_income  = median_income,
+    pct_white      = pct_white,
+    pct_bachelor   = pct_bachelor,
+    pct_enrolled   = pct_enrolled
+  ) %>%
+  mutate(
+    median_income_k = median_income / 1000
+  )
+
+# Step 4: View and export results
+print(acs_clean, n = 10)           # Show first 10 counties
+saveRDS(acs_clean, "acs_clean.rds")   # Save as RDS
+write_csv(acs_clean, "acs_clean.csv") # Save as CSV
+
+
+```

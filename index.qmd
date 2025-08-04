@@ -1,0 +1,49 @@
+---
+title: "Digital Inequality in U.S. Broadband Access"
+author: "Umaira"
+format: html
+execute: 
+  echo: false
+---
+
+
+```{r}
+#| echo: false
+#| warning: false
+# Load required packages
+library(tidyverse)
+library(tidycensus)
+# Load necessary packages
+library(tidyverse)
+
+# Load required libraries
+library(plotly)
+library(readr)
+library(dplyr)
+
+# Load cleaned data
+acs_clean <- read_csv("acs_clean.csv")
+
+# Linear model
+model <- lm(broadband_total ~ median_income_k + pct_white + pct_bachelor + pct_enrolled,
+            data = acs_clean)
+
+# Add predictions to the same data (after dropping NAs used in model)
+acs_model_data <- model.frame(model)  # this only keeps complete rows
+acs_model_data$predicted <- predict(model)
+
+# Plot: Predicted broadband access by median income
+ggplot(acs_model_data, aes(x = median_income_k, y = predicted)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(
+    title = "Predicted Broadband Access by Median Income",
+    x = "Median Household Income (in $1000s)",
+    y = "Predicted Broadband Access (%)"
+  ) +
+  theme_minimal()
+
+```
+
+Broadband internet access across U.S. counties varies significantly with income, race, and education levels. Using data from the U.S. Census Bureau’s American Community Survey (ACS) 5-year estimates for 2023, I examined county-level variation in broadband access, median household income, racial composition, and educational attainment across the United States. The raw data were retrieved via the tidycensus R package and cleaned to create a wide-format dataset with one row per county and five key socioeconomic indicators. We modeled broadband access as a linear function of median household income, racial composition, and levels of education. Counties with higher income tended to have significantly greater broadband coverage, even after accounting for racial and educational differences. A $1,000 increase in median income is associated with a 2.4% increase in broadband access, even after controlling for other factors.
+

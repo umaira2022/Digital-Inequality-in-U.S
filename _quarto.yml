@@ -1,0 +1,28 @@
+project:
+  type: website
+
+website:
+  title: "Digital Inequality in U.S. Broadband Access"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: about.qmd
+        text: About
+      - href: data.qmd
+        text: Data
+      - href: sources.qmd
+        text: Sources
+      - href: model.qmd
+        text: Model
+
+format:  
+  html:
+    theme:
+      - cosmo
+      - brand
+    css: styles.css
+    toc: true
+
+
+

@@ -1,0 +1,100 @@
+---
+title: "Modeling Broadband Access"
+format: html
+execute:
+  echo: false
+  warning: false
+---
+
+## Modeling Broadband Access
+
+To better understand the factors influencing broadband access across U.S. counties, we developed a **linear regression model**. The outcome variable is the **percentage of households with broadband internet subscriptions**. The model includes four key predictors:
+
+- **Median household income** (in thousands of dollars),
+- **Percentage of the population identifying as White**,
+- **Percentage of adults with a bachelor's degree**, and
+- **Percentage of individuals currently enrolled in school**.
+
+### Model Formula
+
+$$
+\text{Broadband Access} = \beta_0 + \beta_1 \cdot \text{Income} + \beta_2 \cdot \text{White} + \beta_3 \cdot \text{Bachelor's Degree} + \beta_4 \cdot \text{School Enrollment} + \epsilon
+$$
+
+### Data Preparation
+
+```{r}
+library(tidyverse)
+library(tidycensus)
+library(broom)
+
+# Load and reshape the dataset
+acs_extended <- readRDS("acs_extended_2019_2023.rds")
+
+acs_clean <- acs_extended %>%
+  select(GEOID, NAME, variable, estimate) %>%
+  pivot_wider(names_from = variable, values_from = estimate) %>%
+  rename(
+    county          = NAME,
+    broadband_total = broadband_total,
+    median_income   = median_income,
+    pct_white       = pct_white,
+    pct_bachelor    = pct_bachelor,
+    pct_enrolled    = pct_enrolled
+  ) %>%
+  mutate(
+    median_income_k = median_income / 1000
+  ) %>%
+  drop_na(median_income_k, pct_white, pct_bachelor, pct_enrolled, broadband_total)
+
+```
+
+```{r}
+# Fit the model
+model <- lm(broadband_total ~ median_income_k + pct_white + pct_bachelor + pct_enrolled,
+            data = acs_clean)
+
+# Model summary
+summary(model)
+
+```
+
+
+```{r}
+# Tidy model output with confidence intervals
+model_results <- tidy(model, conf.int = TRUE)
+model_results
+
+```
+
+```{r}
+# Add predictions
+acs_clean <- acs_clean %>%
+  mutate(predicted_broadband = predict(model))
+
+# Plot: actual vs predicted
+ggplot(acs_clean, aes(x = broadband_total, y = predicted_broadband)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    title = "Actual vs Predicted Broadband Access",
+    x = "Actual Broadband Access (%)",
+    y = "Predicted Broadband Access (%)"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Plot: Predicted broadband access by income
+ggplot(acs_clean, aes(x = median_income_k, y = predicted_broadband)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(
+    title = "Predicted Broadband Access by Median Income",
+    x = "Median Household Income (in $1000s)",
+    y = "Predicted Broadband Access (%)"
+  ) +
+  theme_minimal()
+
+```
