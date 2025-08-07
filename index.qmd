@@ -1,6 +1,5 @@
 ---
 title: "Digital Inequality in U.S. Broadband Access"
-author: "Umaira"
 format: html
 execute: 
   echo: false
@@ -24,26 +23,69 @@ library(dplyr)
 # Load cleaned data
 acs_clean <- read_csv("acs_clean.csv")
 
+```
+
+```{r}
 # Linear model
-model <- lm(broadband_total ~ median_income_k + pct_white + pct_bachelor + pct_enrolled,
+model <- lm(broadband_total ~ median_income_k + pct_white + pct_bachelor + pct_enrolled + median_age,
             data = acs_clean)
+```
 
-# Add predictions to the same data (after dropping NAs used in model)
-acs_model_data <- model.frame(model)  # this only keeps complete rows
-acs_model_data$predicted <- predict(model)
 
-# Plot: Predicted broadband access by median income
-ggplot(acs_model_data, aes(x = median_income_k, y = predicted)) +
-  geom_point(alpha = 0.4) +
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  labs(
-    title = "Predicted Broadband Access by Median Income",
-    x = "Median Household Income (in $1000s)",
-    y = "Predicted Broadband Access (%)"
-  ) +
-  theme_minimal()
+
+```{r}
+#| echo: false
+#| warning: false
+# Predicted values for each county using the model
+acs_clean$predicted <- predict(model, newdata = acs_clean)
 
 ```
 
-Broadband internet access across U.S. counties varies significantly with income, race, and education levels. Using data from the U.S. Census Bureau’s American Community Survey (ACS) 5-year estimates for 2023, I examined county-level variation in broadband access, median household income, racial composition, and educational attainment across the United States. The raw data were retrieved via the tidycensus R package and cleaned to create a wide-format dataset with one row per county and five key socioeconomic indicators. We modeled broadband access as a linear function of median household income, racial composition, and levels of education. Counties with higher income tended to have significantly greater broadband coverage, even after accounting for racial and educational differences. A $1,000 increase in median income is associated with a 2.4% increase in broadband access, even after controlling for other factors.
+```{r}
+# 📊 Create coef_df for lollipop plot
+conf_int <- confint(model)
+coef_df <- broom::tidy(model) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(lower = conf_int[term, 1],
+         upper = conf_int[term, 2],
+         effect = ifelse(estimate > 0, "Positive", "Negative"),
+         variable = case_when(
+           term == "median_income_k" ~ "Median Income",
+           term == "pct_white" ~ "% White",
+           term == "pct_bachelor" ~ "% Bachelor's Degree",
+           term == "pct_enrolled" ~ "% Enrolled in School",
+           term == "median_age" ~ "Median Age",
+           TRUE ~ term
+         ))
 
+```
+
+```{r}
+ggplot(coef_df, aes(x = reorder(variable, estimate), y = estimate)) +
+  geom_segment(aes(xend = variable, y = 0, yend = estimate, color = effect), 
+               linewidth = 1.2, lineend = "round") +
+  geom_point(aes(color = effect), size = 6) +
+  geom_errorbar(aes(ymin = lower, ymax = upper, color = effect), width = 0.15, linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40", linewidth = 1) +
+  coord_flip() +
+  scale_color_manual(values = c("Positive" = "#2C7BB6", "Negative" = "#D7191C")) +
+  labs(
+    title = "Digital Inequality in U.S. Broadband Access",
+    subtitle = "Effect of Socioeconomic Variables on Broadband Availability(95% CI)",
+    x = "Predictor Variable",
+    y = "Effect on Broadband Access (%)",
+    color = "Effect Direction"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 12, hjust = 0),
+    plot.subtitle = element_text(size = 08, hjust = 0, margin = margin(b = 10)),
+    legend.position = "top",
+    axis.title.y = element_blank()
+  )
+
+
+
+```
+
+Broadband internet access across U.S. counties varies significantly with income, race, age, and education levels. Using data from the U.S. Census Bureau’s American Community Survey (ACS) 5-year estimates for 2023, I examined county-level variation in broadband access in relation to median household income, racial composition, educational attainment, school enrollment, and median age. The data were retrieved using the tidycensus R package and processed to create a clean, wide-format dataset containing one row per county and five key socioeconomic variables. Broadband access was modeled as a linear function of these predictors. The results show that counties with higher income levels and larger White populations tend to have significantly greater broadband access, even after accounting for other factors. In particular, a $1,000 increase in median household income is associated with a 2.34% increase in broadband access (95% CI: 2.06%, 2.61%). A one percentage point increase in the White population predicts a 0.42% increase in broadband access (95% CI: 0.01%, 0.83%). On the other hand, each 1% increase in adults with a bachelor’s degree is associated with a 2.35% decrease in broadband access (95% CI: –3.38%, –1.32%), while school enrollment is associated with a 3.06% decrease (95% CI: –4.01%, –2.12%), and median age shows a negative effect of –1.10% per additional year (95% CI: –2.00%, –0.22%). These findings suggest that disparities in broadband coverage are influenced not only by economic resources but also by complex demographic and structural factors that may disadvantage certain communities. An interactive visualization further illustrates these relationships, clearly depicting the positive effects of income and race, and the negative effects of education, school enrollment, and age, on predicted broadband access across U.S. counties.

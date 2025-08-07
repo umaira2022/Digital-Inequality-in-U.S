@@ -16,6 +16,7 @@ We accessed this data using the [`tidycensus`](https://walker-data.com/tidycensu
 - `DP05_0077P`: Percent of population identifying as White  
 - `DP02_0067P`: Percent of adults with a bachelor’s degree  
 - `DP02_0057P`: Percent of individuals currently enrolled in school  
+- `DP05_0018`: Percent median_age      
 
 Data was retrieved programmatically using the Census API.
 
